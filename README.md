@@ -308,6 +308,7 @@ A portable demo flow is included for local end-to-end automation:
 - page fixture: `test/fixtures/demo-store.html`
 - MCP test: `test/demo-store.test.mjs`
 - intent artifacts: `specs/demo-store/`
+- traceability matrix and status log: `specs/demo-store/demo-store.traceability.md`
 
 Run only the demo automation with:
 

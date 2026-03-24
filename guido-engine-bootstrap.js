@@ -862,6 +862,10 @@ public sealed class GuidoMcpEngine : IGuidoMcpEngine
             StepAction.Hover => Exec(() => new Actions(driver).MoveToElement(El()).Perform(), step, sw),
             StepAction.SendKeys => Exec(() => { var el = El(); el.Clear(); el.SendKeys(step.InputValue ?? ""); }, step, sw,
                 resolvedSelector: step.SelectorValue, strategy: step.SelectorStrategy),
+            StepAction.Select => Exec(() =>
+                new SelectElement(El()).SelectByText(
+                    step.InputValue ?? throw new ArgumentException("InputValue is required for Select.")),
+                step, sw, resolvedSelector: step.SelectorValue, strategy: step.SelectorStrategy),
             StepAction.Clear => Exec(() => El().Clear(), step, sw),
             StepAction.ScrollIntoView => Exec(() => ScrollTo(El()), step, sw),
             StepAction.WaitForElement => Exec(() => El(), step, sw,
@@ -979,7 +983,7 @@ public sealed class SpectraTraceWriter
 
     private static string FormatRow(TraceEntry e)
     {
-        static string S(string? v) => string.IsNullOrWhiteSpace(v) ? "—" : v.Replace("|", "\\|");
+        static string S(string? v) => string.IsNullOrWhiteSpace(v) ? "—" : v.Replace("|", "\\\\|");
         return $"| {S(e.TraceId)} | {S(e.CorrelationId)} | {S(e.EventType)} | {S(e.Intent)} " +
                $"| {S(e.Timestamp)} | {e.DurationMs} | {S(e.Outcome)} " +
                $"| {S(e.SelectorUsed)} | {S(e.Details)} | {S(e.ErrorMessage)} |\\n";
@@ -1104,7 +1108,7 @@ public static class ExecuteStepCommand
     public static async Task<string> ExecuteStep(
         IGuidoMcpEngine engine,
         [Description("Human-readable purpose, e.g. 'Click the login button'")] string intent,
-        [Description("Action: Navigate|Click|DoubleClick|RightClick|SendKeys|Clear|Hover|GetText|GetAttribute|WaitForElement|ScrollIntoView|AssertText|AssertVisible|AssertEnabled|TakeScreenshot")] string action,
+        [Description("Action: Navigate|Click|DoubleClick|RightClick|SendKeys|Select|Clear|Hover|GetText|GetAttribute|WaitForElement|ScrollIntoView|AssertText|AssertVisible|AssertEnabled|TakeScreenshot")] string action,
         [Description("Selector strategy: Id|DataTestId|AriaLabel|Name|CssSelector|XPath|LinkText|PartialLinkText")] string selectorStrategy,
         [Description("Selector value, e.g. 'user-name' or '#login-btn' or '//button[@type=\\"submit\\"]'")] string selectorValue,
         [Description("Input value for SendKeys/AssertText, or attribute name for GetAttribute")] string? inputValue = null,

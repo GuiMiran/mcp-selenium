@@ -1,0 +1,19 @@
+{
+  "validUser": {
+    "username": "standard_user",
+    "password": "secret_sauce"
+  },
+  "invalidUser": {
+    "username": "locked_out",
+    "password": "bad_password"
+  },
+  "checkout": {
+    "firstName": "Guido",
+    "lastName": "Tester",
+    "postalCode": "12345"
+  },
+  "products": [
+    "Backpack",
+    "Bike Light"
+  ]
+}

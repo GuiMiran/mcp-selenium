@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GUIDO Demo Store</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f4f6fb; color: #162033; }
+    main { max-width: 900px; margin: 0 auto; padding: 32px 20px 48px; }
+    .panel { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .hidden { display: none; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; min-width: 220px; }
+    label { font-weight: 600; }
+    input { padding: 10px 12px; border: 1px solid #c3cad7; border-radius: 8px; }
+    button { border: 0; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-weight: 700; }
+    .primary { background: #2563eb; color: #fff; }
+    .secondary { background: #0f766e; color: #fff; }
+    .ghost { background: #e2e8f0; color: #162033; }
+    .product-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .product { border: 1px solid #d8deea; border-radius: 10px; padding: 16px; background: #f8fafc; }
+    .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border-radius: 999px; background: #dc2626; color: #fff; font-weight: 700; }
+    .summary { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 16px; margin-top: 12px; }
+    .error { color: #b91c1c; font-weight: 700; min-height: 24px; }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="login-panel" class="panel" data-testid="login-panel">
+      <h1 id="app-title">GUIDO Demo Store</h1>
+      <p id="app-subtitle">A local demo page for login, cart, and checkout automation.</p>
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" aria-label="Username" data-testid="username-input" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" aria-label="Password" data-testid="password-input">
+      </div>
+      <button id="login-button" class="primary" data-testid="login-button">Login</button>
+      <p id="login-error" class="error" role="alert" aria-live="polite"></p>
+    </section>
+
+    <section id="inventory-panel" class="panel hidden" data-testid="inventory-panel">
+      <div class="row" style="justify-content: space-between; align-items: center;">
+        <div>
+          <h2 id="inventory-title">Products</h2>
+          <p id="inventory-copy">Select products and move to checkout.</p>
+        </div>
+        <div class="row" style="align-items: center;">
+          <span id="cart-count" class="badge" aria-label="Cart count">0</span>
+          <button id="cart-button" class="secondary" data-testid="cart-button">Open Cart</button>
+        </div>
+      </div>
+
+      <div class="product-list">
+        <article class="product">
+          <h3 id="product-backpack-name">Backpack</h3>
+          <p id="product-backpack-price">$29.99</p>
+          <button id="add-backpack" class="ghost add-to-cart" data-product-name="Backpack" data-testid="add-backpack">Add to cart</button>
+        </article>
+        <article class="product">
+          <h3 id="product-bike-light-name">Bike Light</h3>
+          <p id="product-bike-light-price">$9.99</p>
+          <button id="add-bike-light" class="ghost add-to-cart" data-product-name="Bike Light" data-testid="add-bike-light">Add to cart</button>
+        </article>
+      </div>
+    </section>
+
+    <section id="cart-panel" class="panel hidden" data-testid="cart-panel">
+      <h2 id="cart-title">Your Cart</h2>
+      <p id="cart-items">No items yet.</p>
+      <button id="checkout-button" class="primary" data-testid="checkout-button">Checkout</button>
+    </section>
+
+    <section id="checkout-panel" class="panel hidden" data-testid="checkout-panel">
+      <h2 id="checkout-title">Checkout: Your Information</h2>
+      <div class="row">
+        <div class="field">
+          <label for="first-name">First Name</label>
+          <input id="first-name" name="firstName" aria-label="First Name" data-testid="first-name-input">
+        </div>
+        <div class="field">
+          <label for="last-name">Last Name</label>
+          <input id="last-name" name="lastName" aria-label="Last Name" data-testid="last-name-input">
+        </div>
+        <div class="field">
+          <label for="postal-code">Postal Code</label>
+          <input id="postal-code" name="postalCode" aria-label="Postal Code" data-testid="postal-code-input">
+        </div>
+      </div>
+      <button id="continue-button" class="primary" data-testid="continue-button">Continue</button>
+    </section>
+
+    <section id="overview-panel" class="panel hidden" data-testid="overview-panel">
+      <h2 id="summary-title">Checkout: Overview</h2>
+      <div id="summary-body" class="summary">Pending summary</div>
+      <button id="finish-button" class="secondary" data-testid="finish-button">Finish</button>
+    </section>
+
+    <section id="complete-panel" class="panel hidden" data-testid="complete-panel">
+      <h2 id="complete-header">Thank you for your order!</h2>
+      <p id="complete-text">Your demo purchase has been completed successfully.</p>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      loggedIn: false,
+      cart: [],
+      checkout: null,
+    };
+
+    const credentials = {
+      username: 'standard_user',
+      password: 'secret_sauce',
+    };
+
+    const sections = {
+      login: document.getElementById('login-panel'),
+      inventory: document.getElementById('inventory-panel'),
+      cart: document.getElementById('cart-panel'),
+      checkout: document.getElementById('checkout-panel'),
+      overview: document.getElementById('overview-panel'),
+      complete: document.getElementById('complete-panel'),
+    };
+
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const loginError = document.getElementById('login-error');
+    const cartCount = document.getElementById('cart-count');
+    const cartItems = document.getElementById('cart-items');
+    const summaryBody = document.getElementById('summary-body');
+
+    function showSection(key) {
+      for (const [sectionKey, element] of Object.entries(sections)) {
+        element.classList.toggle('hidden', sectionKey !== key);
+      }
+    }
+
+    function renderCart() {
+      cartCount.textContent = String(state.cart.length);
+      cartItems.textContent = state.cart.length
+        ? state.cart.join(', ')
+        : 'No items yet.';
+    }
+
+    function renderOverview() {
+      summaryBody.textContent =
+        `${state.cart.join(', ')} | ` +
+        `${state.checkout.firstName} ${state.checkout.lastName} | ` +
+        `${state.checkout.postalCode}`;
+    }
+
+    document.getElementById('login-button').addEventListener('click', () => {
+      if (
+        usernameInput.value === credentials.username &&
+        passwordInput.value === credentials.password
+      ) {
+        state.loggedIn = true;
+        loginError.textContent = '';
+        showSection('inventory');
+      } else {
+        loginError.textContent = 'Invalid credentials';
+      }
+    });
+
+    for (const button of document.querySelectorAll('.add-to-cart')) {
+      button.addEventListener('click', () => {
+        state.cart.push(button.dataset.productName);
+        renderCart();
+      });
+    }
+
+    document.getElementById('cart-button').addEventListener('click', () => {
+      renderCart();
+      showSection('cart');
+    });
+
+    document.getElementById('checkout-button').addEventListener('click', () => {
+      showSection('checkout');
+    });
+
+    document.getElementById('continue-button').addEventListener('click', () => {
+      state.checkout = {
+        firstName: document.getElementById('first-name').value,
+        lastName: document.getElementById('last-name').value,
+        postalCode: document.getElementById('postal-code').value,
+      };
+      renderOverview();
+      showSection('overview');
+    });
+
+    document.getElementById('finish-button').addEventListener('click', () => {
+      showSection('complete');
+    });
+  </script>
+</body>
+</html>

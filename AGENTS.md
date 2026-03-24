@@ -2,7 +2,16 @@
 
 MCP server for Selenium WebDriver browser automation. JavaScript (ES Modules), Node.js, stdio transport (JSON-RPC 2.0).
 
-## File Map
+This repository contains **two independent MCP servers**:
+
+| Server | Runtime | Purpose |
+|--------|---------|---------|
+| `src/lib/server.js` | Node.js | Original JS Selenium MCP server (18 tools) |
+| `src/GUIDO.Mcp.Engine/` | .NET 8 / C# | GUIDO Agentic Execution Engine (4 structured tools) |
+
+---
+
+## JS Server — File Map
 
 ```text
 src/lib/server.js                ← ALL server logic: tool definitions, state, helpers, cleanup
@@ -13,7 +22,7 @@ test/*.test.mjs                  ← Tests grouped by feature
 test/fixtures/*.html             ← HTML files loaded via file:// URLs in tests
 ```
 
-## Architecture
+## JS Server — Architecture
 
 Server logic lives in `server.js`, with browser-injected scripts in separate files. 18 tools, 2 resources.
 
@@ -30,7 +39,7 @@ Related operations are consolidated into single tools with `action` enum paramet
 
 BiDi (WebDriver BiDi) is auto-enabled on `start_browser` for passive capture of console logs, JS errors, and network activity. Modules are dynamically imported — if unavailable, BiDi is silently skipped.
 
-## Conventions
+## JS Server — Conventions
 
 - **ES Modules** — `import`/`export`, not `require`.
 - **Zod schemas** — tool inputs defined with Zod, auto-converted to JSON Schema by MCP SDK.
@@ -39,7 +48,7 @@ BiDi (WebDriver BiDi) is auto-enabled on `start_browser` for passive capture of 
 - **`send_keys` clears first** — calls `element.clear()` before typing. Intentional.
 - **MCP compliance** — before modifying server behavior, read the [MCP spec](https://modelcontextprotocol.io/specification/2025-11-25). Don't violate it.
 
-## Adding a Tool
+## JS Server — Adding a Tool
 
 Before adding, ask: can this be a parameter on an existing tool? Would an LLM realistically call it? Can `execute_script` already do it?
 
@@ -60,7 +69,7 @@ server.tool("tool_name", "description", {
 
 After adding: add tests, run `npm test`, update README.
 
-## Testing
+## JS Server — Testing
 
 ```bash
 npm test
@@ -82,3 +91,88 @@ Tests talk to the real MCP server over stdio. No mocking. Each test file uses **
 | `cookies.test.mjs` | add_cookie, get_cookies, delete_cookie |
 | `bidi.test.mjs` | diagnostics (console/errors/network), session isolation |
 | `resources.test.mjs` | accessibility-snapshot resource (tree structure, filtering, no-session error) |
+
+---
+
+## GUIDO Engine — Architecture
+
+```text
+src/GUIDO.Mcp.Engine/
+├── Commands/               ← MCP tool handlers (thin delegates)
+│   ├── ScanDomCommand.cs
+│   ├── ExecuteStepCommand.cs
+│   ├── HealSelectorCommand.cs
+│   └── TraceCommand.cs
+├── Domain/                 ← Core domain types (no external deps)
+│   ├── DomMap.cs           ← DOM scan result
+│   ├── DomElement.cs       ← Element + ranked SelectorCandidates
+│   ├── ExecutionStep.cs    ← Intent-based step (action + selector + intent)
+│   ├── ExecutionResult.cs  ← Step outcome
+│   ├── HealingResult.cs    ← Healing proposals
+│   └── ExecutionTrace.cs   ← SPECTRA-TRACE entry
+├── Infrastructure/         ← Selenium driver management
+│   ├── SessionManager.cs
+│   ├── DriverFactory.cs
+│   └── LocatorResolver.cs
+├── Services/               ← Core logic
+│   ├── IGuidoMcpEngine.cs  ← Core interface
+│   ├── GuidoMcpEngine.cs   ← Primary implementation
+│   ├── DomScanService.cs
+│   ├── SelectorStabilityService.cs
+│   └── SelfHealingService.cs
+├── Tracing/                ← SPECTRA-TRACE observability
+│   ├── ExecutionTraceService.cs
+│   ├── TraceEntry.cs
+│   └── SpectraTraceWriter.cs
+├── Program.cs              ← MCP server entry point (stdio)
+└── GUIDO.Mcp.Engine.csproj
+```
+
+## GUIDO Engine — Tools
+
+| Tool | Description |
+|------|-------------|
+| `scan_dom` | Navigate to URL; return DOM map with ranked selector candidates |
+| `execute_step` | Execute one intent-based step (click/type/assert/navigate/etc.) |
+| `heal_selector` | Propose alternatives for a broken selector (controlled, not silent) |
+| `emit_trace` | Push an orchestrator-level event into GUIDO-TRACE.md |
+
+## GUIDO Engine — Design Principles
+
+- **No orchestration** — executes instructions; never sequences them autonomously
+- **No business logic** — does not know what "login" means; the orchestrator does
+- **Intent-based steps** — every `ExecutionStep` carries human-readable `intent` alongside the technical `action`
+- **Controlled healing** — proposes alternatives; the orchestrator decides; no silent selector substitution
+- **SPECTRA-TRACE hooks** — every operation emits a typed `ExecutionTrace` appended to `GUIDO-TRACE.md`
+- **Stability ranking** — selectors ranked id=100 > data-testid=90 > aria-label=80 > name=70 > css=60 > xpath=40
+
+## GUIDO Engine — Setup
+
+```bash
+# 1. Generate all C# project files (first-time only)
+npm run guido:setup
+
+# 2. Build and run
+cd src/GUIDO.Mcp.Engine
+dotnet restore
+dotnet build
+dotnet run
+```
+
+## GUIDO Engine — MCP Client Config
+
+```json
+{
+  "mcpServers": {
+    "selenium-js": {
+      "command": "node",
+      "args": ["bin/mcp-selenium.js"]
+    },
+    "guido-engine": {
+      "command": "dotnet",
+      "args": ["run", "--project", "src/GUIDO.Mcp.Engine"]
+    }
+  }
+}
+```
+

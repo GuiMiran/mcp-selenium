@@ -1,0 +1,48 @@
+name: Build and Test GUIDO Engine
+
+on:
+  push:
+    paths:
+      - "guido-engine-bootstrap.js"
+      - "bootstrap_python.py"
+      - "package.json"
+      - "src/GUIDO.Mcp.Engine/**"
+      - ".github/workflows/build-and-test-guido-engine.yml"
+  pull_request:
+    paths:
+      - "guido-engine-bootstrap.js"
+      - "bootstrap_python.py"
+      - "package.json"
+      - "src/GUIDO.Mcp.Engine/**"
+      - ".github/workflows/build-and-test-guido-engine.yml"
+
+jobs:
+  guido-engine:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Generate GUIDO engine sources
+        run: npm run guido:setup
+
+      - name: Restore GUIDO engine
+        run: npm run guido:restore
+
+      - name: Build GUIDO engine
+        run: npm run guido:build

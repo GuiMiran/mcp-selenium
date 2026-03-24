@@ -46,3 +46,20 @@ geckodriver.log
 chromedriver.log
 .goose/
 .beads/
+
+# GUIDO Engine
+src/GUIDO.Mcp.Engine/bin/
+src/GUIDO.Mcp.Engine/obj/
+GUIDO-TRACE.md
+
+# Temp bootstrap helpers (safe to delete after running guido:setup)
+verify_and_create_dirs.js
+create_dirs.js
+create_dirs.py
+create_dirs.bat
+create_with_exec.js
+run_and_report.js
+
+# .NET
+*.user
+.vs/

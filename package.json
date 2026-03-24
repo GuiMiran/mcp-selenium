@@ -8,7 +8,11 @@
     "mcp-selenium": "./src/lib/server.js"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "guido:setup": "node guido-engine-bootstrap.js",
+    "guido:restore": "dotnet restore src/GUIDO.Mcp.Engine/GUIDO.Mcp.Engine.csproj",
+    "guido:build": "dotnet build src/GUIDO.Mcp.Engine/GUIDO.Mcp.Engine.csproj -c Release",
+    "guido:validate": "npm run guido:setup && npm run guido:restore && npm run guido:build"
   },
   "keywords": [],
   "author": "",

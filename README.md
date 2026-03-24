@@ -268,6 +268,54 @@ npm test
 
 Requires Chrome + chromedriver on PATH. Tests run headless.
 
+### Bootstrap the GUIDO Engine
+
+The repository includes a bootstrap script for the .NET 8 GUIDO execution engine described in `AGENTS.md`.
+
+```bash
+npm run guido:setup
+```
+
+To restore and build the generated engine project:
+
+```bash
+npm run guido:validate
+```
+
+Requires the .NET 8 SDK in addition to Node.js.
+
+### GUIDO Intent Taxonomy
+
+For the agentic stack, the canonical intent artifacts are:
+
+- `*.feature` for executable business intent
+- `*.context.md` for domain, risk, and execution context
+- `*.data.json` for scenario data
+
+Recommended tags for governance and suite selection:
+
+- suite tags: `@smoke`, `@sanity`, `@regression`
+- scope tags: `@component`, `@e2e`, `@acceptance`, `@contract`
+- non-functional tags: `@performance`, `@security`, `@accessibility`
+- governance tags: `@guido:L1`, `@guido:L2`, `@guido:L3`, `@guido:L4`, `@guido:L5`
+
+This keeps `Intent` explicit so `Execution`, `Governance`, and future agentic orchestration can reason over the same source of truth.
+
+### Local demo automation
+
+A portable demo flow is included for local end-to-end automation:
+
+- page fixture: `test/fixtures/demo-store.html`
+- MCP test: `test/demo-store.test.mjs`
+- intent artifacts: `specs/demo-store/`
+- traceability matrix and status log: `specs/demo-store/demo-store.traceability.md`
+
+Run only the demo automation with:
+
+```bash
+node --test test/demo-store.test.mjs
+```
+
 ### Install via Smithery
 
 ```bash
